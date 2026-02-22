@@ -1,0 +1,48 @@
+{
+    "app": {
+        "name": "AirBersih",
+        "tagline": "Indonesia Drinking Water Quality Risk Intelligence Platform",
+        "description": "Answering the question 270 million Indonesians deserve: is the water in my village safe to drink?"
+    },
+    "nav": {
+        "map": "Map",
+        "reports": "Reports",
+        "analytics": "Analytics",
+        "report": "Report",
+        "about": "About",
+        "nlp": "Documents",
+        "flood": "Flood",
+        "coverage": "Data Coverage"
+    },
+    "hero": {
+        "title": "Is the Water in Your Village Safe?",
+        "subtitle": "The first platform unifying water quality data across Indonesia — Kemenkes, Pamsimas, PDAM, and community reports — into one comprehensive risk map.",
+        "cta": "Check Your Village's Water Quality",
+        "secondary_cta": "View National Map"
+    },
+    "stats": {
+        "villages_monitored": "Villages Monitored",
+        "data_points": "Data Points",
+        "provinces": "Provinces",
+        "water_sources": "Water Sources"
+    },
+    "risk": {
+        "aman": "Safe",
+        "risiko_rendah": "Low Risk",
+        "risiko_sedang": "Moderate Risk",
+        "risiko_tinggi": "High Risk",
+        "berbahaya": "Dangerous",
+        "measured": "Measured",
+        "predicted": "Predicted",
+        "confidence": "Confidence Level"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "retry": "Retry",
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "language": "Language"
+    }
+}
