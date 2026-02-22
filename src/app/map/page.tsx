@@ -218,9 +218,12 @@ export default function MapPage() {
                     map.getCanvas().style.cursor = '';
                 });
 
-                map.resize();
+                setTimeout(() => map.resize(), 50); // force recalculate dimensions after load
                 setMapLoaded(true);
             });
+
+            // Also resize on mount after a tick to ensure container dimensions are read
+            setTimeout(() => map.resize(), 200);
 
             handleResize = () => map.resize();
             window.addEventListener('resize', handleResize);
@@ -249,13 +252,22 @@ export default function MapPage() {
     ];
 
     return (
-        // -mt-14 cancels the main pt-14 so the map can own the full viewport below the navbar
-        <div className="relative w-full -mt-14" style={{ height: '100dvh' }}>
-            {/* Map Container — fills full CSS height, no JS height state */}
-            <div ref={mapContainer} className="absolute inset-0" />
+        <>
+            {/* Map fills the full viewport, sits behind navbar via z-index */}
+            <div
+                ref={mapContainer}
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 0,
+                }}
+            />
 
             {/* === TOP CONTROLS === */}
-            <div className="absolute top-4 left-4 right-4 z-10 flex gap-3 pointer-events-none">
+            <div className="fixed top-[72px] left-4 right-4 z-10 flex gap-3 pointer-events-none">
                 {/* Search */}
                 <div className="pointer-events-auto flex-1 max-w-md">
                     <div className="relative">
@@ -282,7 +294,7 @@ export default function MapPage() {
 
             {/* === LAYER PANEL === */}
             {showLayers && (
-                <div className="absolute top-16 right-4 z-20 w-64 bg-[#0A0A0A] border border-white/10 rounded-lg p-4 shadow-2xl animate-fade-in-up animate-fade-in-up-1">
+                <div className="fixed top-[120px] right-4 z-20 w-64 bg-[#0A0A0A] border border-white/10 rounded-lg p-4 shadow-2xl animate-fade-in-up animate-fade-in-up-1">
                     <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
                         <h3 className="text-[11px] font-semibold text-[#888] uppercase tracking-widest">Map Layers</h3>
                         <button onClick={() => setShowLayers(false)} className="text-[#666] hover:text-white transition-colors">
@@ -311,7 +323,7 @@ export default function MapPage() {
             )}
 
             {/* === LEGEND === */}
-            <div className="absolute bottom-8 left-4 z-10 bg-[#0A0A0A] border border-white/10 rounded-lg p-4 shadow-2xl space-y-4">
+            <div className="fixed bottom-8 left-4 z-10 bg-[#0A0A0A] border border-white/10 rounded-lg p-4 shadow-2xl space-y-4">
                 <div>
                     <p className="text-[10px] text-[#666] uppercase tracking-widest font-semibold mb-3">Risk Classification</p>
                     <div className="space-y-2">
@@ -337,7 +349,7 @@ export default function MapPage() {
 
             {/* === SOURCE DETAIL PANEL === */}
             {selectedSource && (
-                <div className="absolute top-16 right-4 z-30 w-80 bg-[#0A0A0A] border border-white/10 rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
+                <div className="fixed top-[120px] right-4 z-30 w-80 bg-[#0A0A0A] border border-white/10 rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
                     {/* Header */}
                     <div className="p-4 border-b border-white/5 bg-[#050505]">
                         <div className="flex items-start justify-between">
@@ -425,13 +437,13 @@ export default function MapPage() {
 
             {/* === LOADING OVERLAY === */}
             {!mapLoaded && (
-                <div className="absolute inset-0 z-40 bg-black flex items-center justify-center">
+                <div className="fixed inset-0 z-40 bg-black flex items-center justify-center">
                     <div className="text-center flex flex-col items-center">
                         <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-white animate-spin mb-4" />
                         <p className="text-xs uppercase tracking-widest text-[#666]">Initializing GIS Core...</p>
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }
