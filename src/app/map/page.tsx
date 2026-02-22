@@ -91,152 +91,151 @@ export default function MapPage() {
     useEffect(() => {
         if (!mapContainer.current || mapRef.current) return;
 
-        // Use CARTO Dark Matter raster tiles — free, no API key, works reliably
-        // This avoids the glyphs/sprite dependency that caused silent style load failures
-        const map = new maplibregl.Map({
-            container: mapContainer.current,
-            style: {
-                version: 8,
-                name: 'AirBersih Dark',
-                sources: {
-                    'carto-dark': {
-                        type: 'raster',
-                        tiles: [
-                            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                            'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                        ],
-                        tileSize: 256,
-                        attribution: '© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-                        maxzoom: 19,
-                    },
-                },
-                layers: [
-                    {
-                        id: 'carto-dark-layer',
-                        type: 'raster',
-                        source: 'carto-dark',
-                        paint: {
-                            // Slightly cool/blue tint to match the AirBersih dark aesthetic
-                            'raster-hue-rotate': 200,
-                            'raster-saturation': -0.15,
-                            'raster-brightness-max': 0.85,
+        let timeoutId: ReturnType<typeof setTimeout>;
+        let handleResize: () => void;
+
+        // Small timeout ensures the DOM has fully painted and the container
+        // has a real non-zero bounding rect before MapLibre reads it.
+        timeoutId = setTimeout(() => {
+            if (!mapContainer.current || mapRef.current) return;
+
+            const map = new maplibregl.Map({
+                container: mapContainer.current,
+                style: {
+                    version: 8,
+                    name: 'AirBersih Dark',
+                    sources: {
+                        'carto-dark': {
+                            type: 'raster',
+                            tiles: [
+                                'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                                'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                                'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                            ],
+                            tileSize: 256,
+                            attribution: '© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                            maxzoom: 19,
                         },
                     },
-                ],
-            },
-            center: [118, -2],
-            zoom: 5,
-            minZoom: 3,
-            maxZoom: 18,
-        });
-
-        map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-        map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
-
-        map.on('load', () => {
-            // Add water source points
-            const geojson: GeoJSON.FeatureCollection = {
-                type: 'FeatureCollection',
-                features: DEMO_WATER_SOURCES.map((src) => ({
-                    type: 'Feature' as const,
-                    properties: {
-                        id: src.id,
-                        name: src.name,
-                        type: src.type,
-                        risk: src.risk,
-                        status: src.status,
-                        isMeasured: src.isMeasured,
-                        lastTested: src.lastTested,
-                        color: getRiskColor(src.risk),
-                    },
-                    geometry: {
-                        type: 'Point' as const,
-                        coordinates: [src.lng, src.lat],
-                    },
-                })),
-            };
-
-            map.addSource('water-sources', { type: 'geojson', data: geojson });
-
-            // Outer glow
-            map.addLayer({
-                id: 'water-sources-glow',
-                type: 'circle',
-                source: 'water-sources',
-                paint: {
-                    'circle-radius': 14,
-                    'circle-color': ['get', 'color'],
-                    'circle-opacity': 0.15,
-                    'circle-blur': 1,
+                    layers: [
+                        {
+                            id: 'carto-dark-layer',
+                            type: 'raster',
+                            source: 'carto-dark',
+                            paint: {
+                                'raster-hue-rotate': 200,
+                                'raster-saturation': -0.15,
+                                'raster-brightness-max': 0.85,
+                            },
+                        },
+                    ],
                 },
+                center: [118, -2],
+                zoom: 5,
+                minZoom: 3,
+                maxZoom: 18,
             });
 
-            // Main circle
-            map.addLayer({
-                id: 'water-sources-circle',
-                type: 'circle',
-                source: 'water-sources',
-                paint: {
-                    'circle-radius': [
-                        'interpolate', ['linear'], ['zoom'],
-                        4, 4,
-                        8, 6,
-                        12, 10,
-                    ],
-                    'circle-color': ['get', 'color'],
-                    'circle-opacity': 0.85,
-                    'circle-stroke-width': 2,
-                    'circle-stroke-color': [
-                        'case',
-                        ['get', 'isMeasured'],
-                        '#ffffff',
-                        '#888888',
-                    ],
-                    'circle-stroke-opacity': 0.6,
-                },
-            });
+            map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+            map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
 
-            // Note: text symbol layer removed — requires glyphs server
-            // Labels are shown in the click panel instead
+            map.on('load', () => {
+                const geojson: GeoJSON.FeatureCollection = {
+                    type: 'FeatureCollection',
+                    features: DEMO_WATER_SOURCES.map((src) => ({
+                        type: 'Feature' as const,
+                        properties: {
+                            id: src.id,
+                            name: src.name,
+                            type: src.type,
+                            risk: src.risk,
+                            status: src.status,
+                            isMeasured: src.isMeasured,
+                            lastTested: src.lastTested,
+                            color: getRiskColor(src.risk),
+                        },
+                        geometry: {
+                            type: 'Point' as const,
+                            coordinates: [src.lng, src.lat],
+                        },
+                    })),
+                };
 
-            // Click handler
-            map.on('click', 'water-sources-circle', (e) => {
-                if (!e.features?.[0]) return;
-                const props = e.features[0].properties!;
-                setSelectedSource({
-                    id: props.id,
-                    name: props.name,
-                    type: props.type,
-                    risk: props.risk,
-                    status: props.status,
-                    isMeasured: typeof props.isMeasured === 'string' ? props.isMeasured === 'true' : props.isMeasured,
-                    lastTested: props.lastTested,
+                map.addSource('water-sources', { type: 'geojson', data: geojson });
+
+                map.addLayer({
+                    id: 'water-sources-glow',
+                    type: 'circle',
+                    source: 'water-sources',
+                    paint: {
+                        'circle-radius': 14,
+                        'circle-color': ['get', 'color'],
+                        'circle-opacity': 0.15,
+                        'circle-blur': 1,
+                    },
                 });
+
+                map.addLayer({
+                    id: 'water-sources-circle',
+                    type: 'circle',
+                    source: 'water-sources',
+                    paint: {
+                        'circle-radius': [
+                            'interpolate', ['linear'], ['zoom'],
+                            4, 4,
+                            8, 6,
+                            12, 10,
+                        ],
+                        'circle-color': ['get', 'color'],
+                        'circle-opacity': 0.85,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': [
+                            'case',
+                            ['get', 'isMeasured'],
+                            '#ffffff',
+                            '#888888',
+                        ],
+                        'circle-stroke-opacity': 0.6,
+                    },
+                });
+
+                map.on('click', 'water-sources-circle', (e) => {
+                    if (!e.features?.[0]) return;
+                    const props = e.features[0].properties!;
+                    setSelectedSource({
+                        id: props.id,
+                        name: props.name,
+                        type: props.type,
+                        risk: props.risk,
+                        status: props.status,
+                        isMeasured: typeof props.isMeasured === 'string' ? props.isMeasured === 'true' : props.isMeasured,
+                        lastTested: props.lastTested,
+                    });
+                });
+
+                map.on('mouseenter', 'water-sources-circle', () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+                map.on('mouseleave', 'water-sources-circle', () => {
+                    map.getCanvas().style.cursor = '';
+                });
+
+                map.resize();
+                setMapLoaded(true);
             });
 
-            map.on('mouseenter', 'water-sources-circle', () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-            map.on('mouseleave', 'water-sources-circle', () => {
-                map.getCanvas().style.cursor = '';
-            });
-
-            // Force MapLibre to recalculate canvas size from the DOM
-            map.resize();
-            setMapLoaded(true);
-        });
-
-        mapRef.current = map;
-
-        // Resize handler — keep canvas in sync with CSS-driven container size
-        const handleResize = () => map.resize();
-        window.addEventListener('resize', handleResize);
+            handleResize = () => map.resize();
+            window.addEventListener('resize', handleResize);
+            mapRef.current = map;
+        }, 100);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
-            map.remove();
-            mapRef.current = null;
+            clearTimeout(timeoutId);
+            if (handleResize) window.removeEventListener('resize', handleResize);
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
         };
     }, []);
 
@@ -252,7 +251,8 @@ export default function MapPage() {
     ];
 
     return (
-        <div className="relative w-full" style={{ height: 'calc(100vh - 56px)' }}>
+        // -mt-14 cancels the main pt-14 so the map can own the full viewport below the navbar
+        <div className="relative w-full -mt-14" style={{ height: '100dvh' }}>
             {/* Map Container — fills full CSS height, no JS height state */}
             <div ref={mapContainer} className="absolute inset-0" />
 
